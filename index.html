@@ -512,16 +512,34 @@
   const bgWrap = document.getElementById('bg-wrap');
   const bgA = document.getElementById('bg-a');
   const bgB = document.getElementById('bg-b');
-  let currentColor = '#111';
+  let currentBg = 'default';
   let pending = null;
 
-  function setBg(color) {
-    if (color === currentColor) return;
-    currentColor = color;
-    bgB.style.background = color;
-    bgB.style.opacity = '1';
+  function setBg(value) {
+    if (value === currentBg) return;
+    currentBg = value;
     clearTimeout(pending);
-    pending = setTimeout(() => { bgA.style.background = color; bgB.style.opacity = '0'; }, 500);
+
+    const isGif = value && !value.startsWith('#') && value !== 'default';
+
+    if (isGif) {
+      bgB.style.background = 'var(--bg)';
+      bgB.innerHTML = `<img src="${value}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`;
+    } else if (value === 'default') {
+      bgB.style.background = 'var(--bg)';
+      bgB.innerHTML = `<img src="gif-notquite.gif" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" />`;
+    } else {
+      bgB.innerHTML = '';
+      bgB.style.background = value;
+    }
+
+    bgB.style.opacity = '1';
+    pending = setTimeout(() => {
+      bgA.innerHTML = bgB.innerHTML;
+      bgA.style.background = bgB.style.background;
+      bgB.style.opacity = '0';
+      bgB.innerHTML = '';
+    }, 500);
   }
 
   /* Build list */
@@ -562,8 +580,8 @@
       row.appendChild(nameEl);
       row.appendChild(catEl);
 
-      row.addEventListener('mouseenter', () => setBg(p.color));
-      row.addEventListener('mouseleave', () => setBg('#111'));
+      row.addEventListener('mouseenter', () => setBg(p.hero || p.color));
+      row.addEventListener('mouseleave', () => setBg('default'));
       row.addEventListener('click', () => openProject(i));
       list.appendChild(row);
     });
@@ -643,13 +661,15 @@
       target.classList.add('active');
       navEl.classList.add('transparent');
       bgWrap.classList.add('active');
+      currentBg = null; // force reset so setBg('default') triggers
+      setBg('default');
       navLinks[0].classList.add('active');
     } else {
       target.style.display = 'block';
       target.classList.add('active');
       navEl.classList.remove('transparent');
       bgWrap.classList.remove('active');
-      setBg('#111');
+      currentBg = 'default'; // reset state without triggering bg change
       if (page === 'studio')  navLinks[1].classList.add('active');
       if (page === 'contact') navLinks[2].classList.add('active');
     }

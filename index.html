@@ -357,9 +357,16 @@
       #page-home.active { justify-content: flex-end; height: calc(100vh - var(--nav-h)); overflow: hidden; }
       .list-wrap { padding-top: 0; padding-bottom: 16px; }
       .home-footer { display: none; }
-      .list-header, .project-row { grid-template-columns: 56px 1fr 1fr; }
+      .list-header, .project-row { grid-template-columns: 72px 1fr 1fr; gap: 8px; }
       .bg-label { display: none; }
-      .studio-body { grid-template-columns: 1fr; gap: 28px; }
+      /* studio: single column, paragraphs in logical order */
+      .studio-body {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .studio-body p:nth-child(1) { grid-column: 1; grid-row: auto; }
+      .studio-body p:nth-child(2) { grid-column: 1; grid-row: auto; }
+      .studio-body p:nth-child(3) { grid-column: 1; grid-row: auto; }
       .services-grid { grid-template-columns: 1fr 1fr; }
       .service-item:nth-child(4n) { border-right: 1px solid var(--border); }
       .service-item:nth-child(2n) { border-right: none; padding-right: 0; }
@@ -379,7 +386,7 @@
   <div class="bg-layer" id="bg-a">
     <img src="gif-notquite.gif" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />
   </div>
-  <div class="bg-layer" id="bg-b" style="opacity:0;"></div>
+  <div class="bg-layer" id="bg-b"></div>
 </div>
 
 <!-- NAV -->
@@ -491,7 +498,7 @@
     { year:'2025–26', name:'Onamu',            cats:['Creative Direction'],                       desc:'Creative direction for an emerging furniture and design studio. Developing a visual language that speaks to architecture professionals and design-literate audiences.', scope:['Creative Direction','Brand Strategy','Visual Identity','Communication Strategy'], color:'#1e2228' },
     { year:'2025',    name:'Zoe Gotusso',      cats:['Editorial Design'],                         desc:'Video edit and visual composition for Argentine musician Zoe Gotusso. Image as extension of sound — each frame a deliberate editorial decision.', scope:['Video Edit','Visual Composition','Art Direction'], color:'#281e22', hero:'gif-zoe.gif' },
     { year:'2025',    name:'Arxe',             cats:['Visual Identity'],                          desc:'Identity system for Arxe. A mark and system built to hold complexity — precise, rigorous, scalable.', scope:['Logo','Visual Identity','Brand System'], color:'#1e2820' },
-    { year:'2025',    name:'Portal',           cats:['Visual Identity'],                          desc:'Brand identity for Portal. A system that communicates access, transition, and clarity in equal measure.', scope:['Visual Identity','Logo','Art Direction'], color:'#221e28', hero:'portal1_1.gif' },
+    { year:'2025',    name:'Portal',           cats:['Visual Identity'],                          desc:'Brand identity for Portal. A system that communicates access, transition, and clarity in equal measure.', scope:['Visual Identity','Logo','Art Direction'], color:'#221e28', hero:'portal-gif-lento.gif' },
     { year:'2025',    name:'Hebra',            cats:['Visual Identity'],                          desc:'Visual identity for Hebra. Thread as metaphor — connection, texture, and craft distilled into a coherent visual language.', scope:['Logo','Visual Identity','Brand Guidelines'], color:'#28281e' },
     { year:'2025',    name:'Departamento 112', cats:['Editorial Design'],                         desc:'Editorial design for Departamento 112. Architecture for content — structure that serves reading rather than decorates it.', scope:['Editorial Design','Typography','Layout System'], color:'#1e1e28' },
     { year:'2025',    name:'Gen T',            cats:['Visual Identity'],                          desc:'Identity for Gen T. A generational mark — contemporary without being ephemeral, distinctive without being loud.', scope:['Visual Identity','Logo','Brand System'], color:'#281e1e' },
@@ -501,40 +508,20 @@
     { year:'2025',    name:'TAG',              cats:['Visual Identity'],                          desc:'Visual identity for TAG. Concise, scalable, unmistakable. A system built to work at every scale and context.', scope:['Logo','Visual Identity','Brand Guidelines'], color:'#1e1e1e' },
   ];
 
-  /* BG crossfade — supports color strings and image/gif URLs */
+  /* BG crossfade */
   const bgWrap = document.getElementById('bg-wrap');
   const bgA = document.getElementById('bg-a');
   const bgB = document.getElementById('bg-b');
-  let currentBg = 'default';
+  let currentColor = '#111';
   let pending = null;
 
-  function setBg(value) {
-    // value: 'default' | '#hexcolor' | 'filename.gif'
-    if (value === currentBg) return;
-    currentBg = value;
-    clearTimeout(pending);
-
-    const isImg = value !== 'default' && !value.startsWith('#');
-
-    if (isImg) {
-      bgB.innerHTML = `<img src="${value}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />`;
-      bgB.style.background = '';
-    } else if (value === 'default') {
-      bgB.innerHTML = `<img src="gif-notquite.gif" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />`;
-      bgB.style.background = '';
-    } else {
-      bgB.innerHTML = '';
-      bgB.style.background = value;
-    }
-
+  function setBg(color) {
+    if (color === currentColor) return;
+    currentColor = color;
+    bgB.style.background = color;
     bgB.style.opacity = '1';
-    pending = setTimeout(() => {
-      // swap: copy B content into A, hide B
-      bgA.innerHTML = bgB.innerHTML;
-      bgA.style.background = bgB.style.background;
-      bgB.style.opacity = '0';
-      bgB.innerHTML = '';
-    }, 500);
+    clearTimeout(pending);
+    pending = setTimeout(() => { bgA.style.background = color; bgB.style.opacity = '0'; }, 500);
   }
 
   /* Build list */
@@ -575,9 +562,8 @@
       row.appendChild(nameEl);
       row.appendChild(catEl);
 
-      // hover: show gif if available, otherwise color
-      row.addEventListener('mouseenter', () => setBg(p.hero || p.color));
-      row.addEventListener('mouseleave', () => setBg('default'));
+      row.addEventListener('mouseenter', () => setBg(p.color));
+      row.addEventListener('mouseleave', () => setBg('#111'));
       row.addEventListener('click', () => openProject(i));
       list.appendChild(row);
     });
@@ -657,14 +643,13 @@
       target.classList.add('active');
       navEl.classList.add('transparent');
       bgWrap.classList.add('active');
-      setBg('default');
       navLinks[0].classList.add('active');
     } else {
       target.style.display = 'block';
       target.classList.add('active');
       navEl.classList.remove('transparent');
       bgWrap.classList.remove('active');
-      currentBg = 'default'; // reset so next home visit works
+      setBg('#111');
       if (page === 'studio')  navLinks[1].classList.add('active');
       if (page === 'contact') navLinks[2].classList.add('active');
     }

@@ -217,7 +217,7 @@
       width: 100%; aspect-ratio: 16/9;
       background: #D0D0D0;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 0;
+      margin-bottom: 0; position: relative; overflow: hidden;
     }
     .project-hero-label {
       font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
@@ -376,7 +376,9 @@
 
 <!-- FULLSCREEN BG -->
 <div id="bg-wrap" class="active">
-  <div class="bg-layer" id="bg-a"><span class="bg-label">Video / Image — placeholder</span></div>
+  <div class="bg-layer" id="bg-a">
+    <img src="gif-notquite.gif" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />
+  </div>
   <div class="bg-layer" id="bg-b"></div>
 </div>
 
@@ -485,7 +487,7 @@
     { year:'2026',    name:'La Vie en Rose',   cats:['Logo Design'],                              desc:'Logo design for an emerging Buenos Aires concept. Delicate and precise — a mark that functions as a signature.', scope:['Logo Design','Typography','Brand Mark'], color:'#2e1e1e' },
     { year:'2026',    name:'IMH',              cats:['Visual Identity'],                          desc:'Visual identity system for IMH. Building a coherent visual language that communicates institutional clarity and contemporary sensibility.', scope:['Visual Identity','Logo','Brand System','Guidelines'], color:'#1e1e2e' },
     { year:'2026',    name:"L'Etui",           cats:['Visual Identity'],                          desc:'Identity for a refined product brand. The visual system balances restraint with character — a container that elevates its contents.', scope:['Visual Identity','Art Direction','Packaging'], color:'#2a241e' },
-    { year:'2025–26', name:'Not Quite',        cats:['Creative Direction'],                       desc:'Creative direction for an ongoing project navigating the space between fashion and culture. A sustained visual conversation across channels and formats.', scope:['Creative Direction','Art Direction','Content Strategy'], color:'#222222' },
+    { year:'2025–26', name:'Not Quite',        cats:['Creative Direction'],                       desc:'Creative direction for an ongoing project navigating the space between fashion and culture. A sustained visual conversation across channels and formats.', scope:['Creative Direction','Art Direction','Content Strategy'], color:'#222222', hero:'gif-notquite.gif' },
     { year:'2025–26', name:'Onamu',            cats:['Creative Direction'],                       desc:'Creative direction for an emerging furniture and design studio. Developing a visual language that speaks to architecture professionals and design-literate audiences.', scope:['Creative Direction','Brand Strategy','Visual Identity','Communication Strategy'], color:'#1e2228' },
     { year:'2025',    name:'Zoe Gotusso',      cats:['Editorial Design'],                         desc:'Video edit and visual composition for Argentine musician Zoe Gotusso. Image as extension of sound — each frame a deliberate editorial decision.', scope:['Video Edit','Visual Composition','Art Direction'], color:'#281e22' },
     { year:'2025',    name:'Arxe',             cats:['Visual Identity'],                          desc:'Identity system for Arxe. A mark and system built to hold complexity — precise, rigorous, scalable.', scope:['Logo','Visual Identity','Brand System'], color:'#1e2820' },
@@ -566,7 +568,10 @@
     const shades = ['#C8C8C8','#D0D0D0','#C0C0C0','#CACACA'];
     document.getElementById('project-page-content').innerHTML = `
       <div class="project-hero">
-        <span class="project-hero-label">Image 01 — ${p.name}</span>
+        ${p.hero
+          ? `<img src="${p.hero}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />`
+          : `<span class="project-hero-label">Image 01 — ${p.name}</span>`
+        }
       </div>
 
       <div class="project-title-bar">

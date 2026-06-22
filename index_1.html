@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Madriguera — Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:     #F5F5F5;
+      --green:  #B1F296;
+      --black:  #0A0A0A;
+      --gray:   #999;
+      --border: rgba(10,10,10,0.12);
+      --nav-h:  48px;
+      --mono:   'IBM Plex Mono', 'Courier New', monospace;
+      --sans:   'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 13px; -webkit-font-smoothing: antialiased; }
+    body { background: var(--bg); color: var(--black); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; }
+    button { background: none; border: none; cursor: pointer; font: inherit; color: inherit; padding: 0; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      z-index: 1000;
+      transition: background 0.4s, border-color 0.4s;
+    }
+    nav.transparent {
+      background: transparent;
+      border-bottom-color: rgba(255,255,255,0.1);
+    }
+    nav.transparent .nav-logo { color: rgba(255,255,255,0.85); }
+    nav.transparent .nav-dot  { background: var(--green); }
+    nav.transparent .nav-link { color: rgba(255,255,255,0.35); }
+    nav.transparent .nav-link:hover,
+    nav.transparent .nav-link.active { color: #fff; }
+    .nav-logo {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; font-weight: 400;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .nav-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-link {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); cursor: pointer; transition: color 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--black); }
+
+    /* ── PAGES ── */
+    .page { display: none; padding-top: var(--nav-h); min-height: 100vh; }
+    .page.active { display: block; }
+    #page-home { display: none; padding-top: var(--nav-h); }
+    #page-home.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── FULLSCREEN BG ── */
+    #bg-wrap {
+      position: fixed; inset: 0; z-index: 0; display: none;
+    }
+    #bg-wrap.active { display: block; }
+    .bg-layer {
+      position: absolute; inset: 0; background: #111;
+      transition: opacity 0.5s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .bg-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.12); pointer-events: none;
+    }
+    #bg-b { opacity: 0; }
+
+    /* ── HOME ── */
+    #page-home { position: relative; z-index: 1; }
+    .list-wrap { padding-top: 40px; }
+    .list-header {
+      display: grid; grid-template-columns: 90px 200px 1fr;
+      padding: 0 24px; margin-bottom: 8px;
+    }
+    .list-header span {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.22);
+    }
+    .project-row {
+      display: grid; grid-template-columns: 90px 200px 1fr;
+      padding: 5px 24px; align-items: baseline; cursor: pointer;
+    }
+    .project-row:hover .p-year,
+    .project-row:hover .p-name,
+    .project-row:hover .p-cat { color: var(--green); }
+    .p-year {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.42); transition: color 0.12s;
+    }
+    .p-name {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+      text-transform: uppercase; font-weight: 400;
+      color: rgba(255,255,255,0.42); transition: color 0.12s;
+    }
+    .p-cat {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: rgba(255,255,255,0.42);
+      transition: color 0.12s; white-space: nowrap;
+    }
+    /* clickable service tags within cat cell */
+    .p-cat-link {
+      cursor: pointer; transition: color 0.12s;
+    }
+    .p-cat-link:hover { color: var(--green); }
+    .home-footer {
+      margin-top: auto; padding: 20px 24px;
+      display: flex; justify-content: space-between;
+    }
+    .home-footer span {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255,255,255,0.2);
+    }
+
+    /* ── STUDIO ── */
+    .studio-wrap { max-width: 860px; padding: 72px 24px 120px; }
+    .studio-intro {
+      font-family: var(--mono); font-size: clamp(15px, 1.6vw, 20px);
+      font-weight: 400; line-height: 1.5; letter-spacing: 0.02em;
+      margin-bottom: 56px; padding-bottom: 56px;
+      border-bottom: 1px solid var(--border);
+    }
+    .studio-intro strong { font-weight: 600; }
+    .studio-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 40px 48px;
+      margin-bottom: 72px;
+    }
+    .studio-body p { font-family: var(--mono); font-size: 12px; line-height: 1.85; color: #333; }
+    .studio-body p:nth-child(1) { grid-column: 1; grid-row: 1; }
+    .studio-body p:nth-child(2) { grid-column: 1; grid-row: 2; }
+    .studio-body p:nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
+    .studio-services { border-top: 1px solid var(--border); padding-top: 48px; }
+    .studio-services-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 16px;
+    }
+    .service-list { list-style: none; }
+    .service-list-item {
+      display: flex; align-items: baseline; gap: 16px;
+      padding: 11px 0;
+      cursor: pointer;
+      transition: color 0.12s;
+    }
+    .service-list-item:hover { color: var(--green); }
+    .service-list-item:hover .s-num { color: var(--green); }
+    .s-num {
+      font-family: var(--mono); font-size: 11px; color: var(--gray);
+      letter-spacing: 0.06em; flex-shrink: 0; transition: color 0.12s;
+    }
+    .s-name { font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+    .studio-sign { margin-top: 72px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--gray); font-style: italic; }
+
+    /* ── CONTACT ── */
+    .contact-wrap {
+      padding: 72px 24px 120px;
+      min-height: calc(100vh - var(--nav-h));
+    }
+    .contact-headline {
+      font-family: var(--mono); font-size: clamp(16px, 1.8vw, 22px);
+      font-weight: 400; line-height: 1.1; letter-spacing: 0.04em;
+      margin-bottom: 48px; padding-bottom: 48px; border-bottom: 1px solid var(--border);
+    }
+    .contact-headline strong { font-weight: 400; }
+    .contact-mail-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      border-bottom: 1px solid var(--black);
+      padding-bottom: 12px; margin-bottom: 48px;
+      cursor: pointer; transition: border-color 0.15s;
+      text-decoration: none; color: var(--black);
+    }
+    .contact-mail-row:hover { border-color: var(--gray); color: var(--gray); }
+    .contact-mail-row span {
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    }
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 48px;
+    }
+    .contact-block-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 10px;
+    }
+    .contact-block-value { font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #333; }
+    .contact-block-value a {
+      display: block; margin-bottom: 4px;
+      border-bottom: 1px solid var(--border); transition: border-color 0.15s;
+    }
+    .contact-block-value a:hover { border-color: var(--black); color: var(--black); }
+
+    /* ── PROJECT PAGE ── */
+    .project-page-wrap { padding: 0 0 120px; }
+    .back-btn {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gray); cursor: pointer; display: inline-flex; align-items: center;
+      gap: 8px; transition: color 0.15s; padding: 20px 24px; display: block;
+    }
+    .back-btn:hover { color: var(--black); }
+    .back-btn::before { content: '←'; font-size: 12px; }
+
+    /* hero image — fullscreen width */
+    .project-hero {
+      width: 100%; aspect-ratio: 16/9;
+      background: #D0D0D0;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 0; position: relative; overflow: hidden;
+    }
+    .project-hero-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(10,10,10,0.25);
+    }
+
+    /* title bar */
+    .project-title-bar {
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: end; padding: 32px 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-page-title {
+      font-family: var(--mono); font-size: clamp(16px,2.5vw,28px);
+      font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .project-page-meta {
+      display: flex; gap: 40px; align-items: end;
+    }
+    .project-meta-item {
+      text-align: right;
+    }
+    .project-meta-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); display: block; margin-bottom: 4px;
+    }
+    .project-meta-value {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* content grid */
+    .project-content {
+      display: grid; grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-description {
+      padding: 48px 24px 48px;
+      border-right: 1px solid var(--border);
+    }
+    .project-desc-label {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 20px; display: block;
+    }
+    .project-desc-text {
+      font-family: var(--mono); font-size: 12px; line-height: 1.85; color: #333;
+      max-width: 560px;
+    }
+    .project-scope-col { padding: 48px 24px; }
+    .project-scope-list { list-style: none; margin-top: 20px; }
+    .project-scope-list li {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 10px 0; border-bottom: 1px solid var(--border); color: #444;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .project-scope-list li::before {
+      content: ''; width: 5px; height: 5px; background: var(--green);
+      border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* secondary images grid */
+    .project-images-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+    }
+    .project-img-cell {
+      aspect-ratio: 4/3; background: #C8C8C8;
+      display: flex; align-items: center; justify-content: center;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .project-img-cell:nth-child(2n) { border-right: none; }
+    .project-img-cell span {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(10,10,10,0.25);
+    }
+
+    /* ── SERVICE PAGE ── */
+    #page-service { position: relative; overflow: hidden; }
+    .service-page-wrap {
+      padding: 48px 24px 120px;
+      max-width: 640px;
+    }
+    .service-page-title {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--gray); margin-bottom: 40px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .service-page-title button {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray); cursor: pointer;
+      transition: color 0.15s;
+    }
+    .service-page-title button:hover { color: var(--black); }
+    .service-page-name {
+      font-family: var(--mono); font-size: clamp(18px, 2.5vw, 28px);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 48px; font-weight: 400;
+    }
+    .service-project-list { list-style: none; }
+    .service-project-row {
+      display: grid; grid-template-columns: 60px 1fr;
+      padding: 9px 0; cursor: pointer;
+      transition: color 0.12s; gap: 16px; align-items: baseline;
+    }
+    .service-project-row:hover { color: var(--green); }
+    .sp-year {
+      font-family: var(--mono); font-size: 11px; color: var(--gray);
+      letter-spacing: 0.06em; transition: color 0.12s;
+    }
+    .service-project-row:hover .sp-year { color: var(--green); }
+    .sp-name {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    /* floating project images — random positions */
+    .floating-img {
+      position: fixed;
+      width: 380px;
+      aspect-ratio: 4/3;
+      background: #C8C8C8;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .floating-img.visible { opacity: 1; }
+    .floating-img span {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(10,10,10,0.3);
+    }
+    footer { border-top: 1px solid var(--border); padding: 20px 24px; display: flex; justify-content: space-between; }
+    footer span { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--gray); text-transform: uppercase; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      #page-home.active { justify-content: flex-end; height: calc(100vh - var(--nav-h)); overflow: hidden; }
+      .list-wrap { padding-top: 0; padding-bottom: 16px; }
+      .home-footer { display: none; }
+      .list-header, .project-row { grid-template-columns: 56px 1fr 1fr; }
+      .bg-label { display: none; }
+      .studio-body { grid-template-columns: 1fr; gap: 28px; }
+      .services-grid { grid-template-columns: 1fr 1fr; }
+      .service-item:nth-child(4n) { border-right: 1px solid var(--border); }
+      .service-item:nth-child(2n) { border-right: none; padding-right: 0; }
+      .contact-grid { grid-template-columns: 1fr; gap: 32px; }
+      .contact-headline { font-size: 28px; }
+      .project-page-header { grid-template-columns: 1fr; }
+      .project-images { grid-template-columns: 1fr; }
+      .img-placeholder:first-child { grid-column: 1; }
+      .project-desc-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- FULLSCREEN BG -->
+<div id="bg-wrap" class="active">
+  <div class="bg-layer" id="bg-a">
+    <img src="gif-notquite.gif" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />
+  </div>
+  <div class="bg-layer" id="bg-b"></div>
+</div>
+
+<!-- NAV -->
+<nav id="main-nav" class="transparent">
+  <button class="nav-logo" onclick="navigate('home')">Madriguera <span class="nav-dot"></span></button>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="navigate('home')">Work</button>
+    <button class="nav-link" onclick="navigate('studio')">Studio</button>
+    <button class="nav-link" onclick="navigate('contact')">Contact</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="active">
+  <div class="list-wrap">
+    <div class="list-header">
+      <span>Year</span><span>Project</span><span>Services</span>
+    </div>
+    <div id="project-list"></div>
+  </div>
+  <div class="home-footer">
+    <span>Madriguera Studio — Buenos Aires</span><span>© 2026</span>
+  </div>
+</div>
+
+<!-- STUDIO -->
+<div id="page-studio" class="page">
+  <div class="studio-wrap">
+    <p class="studio-intro">
+      Madriguera is a creative studio focused on <strong>branding, image strategy and consulting</strong> for fashion, design and cultural projects.
+    </p>
+    <div class="studio-body">
+      <p>We work closely with emerging and established brands to uncover what makes them singular — translating identity into visual systems, narratives and content that feel precise, distinctive and culturally aware.</p>
+      <p>Rather than operating as a large production structure, Madriguera works as a focused creative unit. Our practice moves fluidly between strategy and image-making: from brand positioning and visual identity to campaigns, digital content and creative direction.</p>
+      <p>Every project begins with the same intention — understanding the essence of a brand and building a visual language capable of carrying it forward.</p>
+    </div>
+    <div class="studio-services">
+      <p class="studio-services-label">Services</p>
+      <ul class="service-list">
+        <li class="service-list-item" onclick="openService('Visual Identity')"><span class="s-num">01</span><span class="s-name">Visual Identity</span></li>
+        <li class="service-list-item" onclick="openService('Creative Direction')"><span class="s-num">02</span><span class="s-name">Creative Direction</span></li>
+        <li class="service-list-item" onclick="openService('Brand Strategy')"><span class="s-num">03</span><span class="s-name">Brand Strategy</span></li>
+        <li class="service-list-item" onclick="openService('Branding')"><span class="s-num">04</span><span class="s-name">Branding</span></li>
+        <li class="service-list-item" onclick="openService('Editorial Design')"><span class="s-num">05</span><span class="s-name">Editorial Design</span></li>
+        <li class="service-list-item" onclick="openService('Communication Strategy')"><span class="s-num">06</span><span class="s-name">Communication Strategy</span></li>
+        <li class="service-list-item" onclick="openService('Art Direction')"><span class="s-num">07</span><span class="s-name">Art Direction</span></li>
+        <li class="service-list-item" onclick="openService('Consulting')"><span class="s-num">08</span><span class="s-name">Consulting</span></li>
+      </ul>
+    </div>
+    <p class="studio-sign">Martina Llambi & Belén Simonian — Co-founders</p>
+  </div>
+  <footer><span>Madriguera Studio — Buenos Aires</span><span>© 2026</span></footer>
+</div>
+
+<!-- CONTACT -->
+<div id="page-contact" class="page">
+  <div class="contact-wrap">
+    <h2 class="contact-headline">Let's work together.</h2>
+    <a href="mailto:contact@madriguera.studio" class="contact-mail-row">
+      <span>Contact us</span>
+      <span>contact@madriguera.studio</span>
+    </a>
+    <div class="contact-grid">
+      <div>
+        <p class="contact-block-label">Location</p>
+        <p class="contact-block-value">Buenos Aires, Argentina</p>
+      </div>
+      <div>
+        <p class="contact-block-label">Social</p>
+        <p class="contact-block-value">
+          <a href="https://instagram.com/madriguera.office" target="_blank">Instagram — @madriguera.office</a>
+          <a href="https://www.tiktok.com/@madriguera_studio" target="_blank">TikTok — @madriguera_studio</a>
+        </p>
+      </div>
+      <div>
+        <p class="contact-block-label">Available for</p>
+        <p class="contact-block-value">Branding, visual identity, creative direction, communication strategy, editorial design, art direction.</p>
+      </div>
+    </div>
+  </div>
+  <footer><span>Madriguera Studio — Buenos Aires</span><span>© 2026</span></footer>
+</div>
+
+<!-- SERVICE PAGE -->
+<div id="page-service" class="page">
+  <div class="service-page-wrap">
+    <div class="service-page-title">
+      <button onclick="navigate('studio')">← Studio</button>
+    </div>
+    <h2 class="service-page-name" id="service-page-name"></h2>
+    <ul class="service-project-list" id="service-project-list"></ul>
+  </div>
+</div>
+
+<!-- PROJECT PAGE -->
+<div id="page-project" class="page">
+  <a class="back-btn" onclick="navigate('home')">All projects</a>
+  <div id="project-page-content"></div>
+  <footer><span>Madriguera Studio — Buenos Aires</span><span>© 2026</span></footer>
+</div>
+
+<script>
+  const projects = [
+    { year:'2026',    name:'Wild Sur',         cats:['Visual Identity'],                          desc:'Visual identity for an Argentine smoked fish brand rooted in Patagonian landscape and craft tradition. Direct, specific, without solemnity.', scope:['Logo & Wordmark','Brand System','Packaging Direction','Brand Guidelines'], color:'#1e2e1e' },
+    { year:'2026',    name:'La Vie en Rose',   cats:['Logo Design'],                              desc:'Logo design for an emerging Buenos Aires concept. Delicate and precise — a mark that functions as a signature.', scope:['Logo Design','Typography','Brand Mark'], color:'#2e1e1e' },
+    { year:'2026',    name:'IMH',              cats:['Visual Identity'],                          desc:'Visual identity system for IMH. Building a coherent visual language that communicates institutional clarity and contemporary sensibility.', scope:['Visual Identity','Logo','Brand System','Guidelines'], color:'#1e1e2e' },
+    { year:'2026',    name:"L'Etui",           cats:['Visual Identity'],                          desc:'Identity for a refined product brand. The visual system balances restraint with character — a container that elevates its contents.', scope:['Visual Identity','Art Direction','Packaging'], color:'#2a241e' },
+    { year:'2025–26', name:'Not Quite',        cats:['Creative Direction'],                       desc:'Creative direction for an ongoing project navigating the space between fashion and culture. A sustained visual conversation across channels and formats.', scope:['Creative Direction','Art Direction','Content Strategy'], color:'#222222', hero:'gif-notquite.gif' },
+    { year:'2025–26', name:'Onamu',            cats:['Creative Direction'],                       desc:'Creative direction for an emerging furniture and design studio. Developing a visual language that speaks to architecture professionals and design-literate audiences.', scope:['Creative Direction','Brand Strategy','Visual Identity','Communication Strategy'], color:'#1e2228' },
+    { year:'2025',    name:'Zoe Gotusso',      cats:['Editorial Design'],                         desc:'Video edit and visual composition for Argentine musician Zoe Gotusso. Image as extension of sound — each frame a deliberate editorial decision.', scope:['Video Edit','Visual Composition','Art Direction'], color:'#281e22', hero:'gif-zoe.gif' },
+    { year:'2025',    name:'Arxe',             cats:['Visual Identity'],                          desc:'Identity system for Arxe. A mark and system built to hold complexity — precise, rigorous, scalable.', scope:['Logo','Visual Identity','Brand System'], color:'#1e2820' },
+    { year:'2025',    name:'Portal',           cats:['Visual Identity'],                          desc:'Brand identity for Portal. A system that communicates access, transition, and clarity in equal measure.', scope:['Visual Identity','Logo','Art Direction'], color:'#221e28', hero:'portal1_1.gif' },
+    { year:'2025',    name:'Hebra',            cats:['Visual Identity'],                          desc:'Visual identity for Hebra. Thread as metaphor — connection, texture, and craft distilled into a coherent visual language.', scope:['Logo','Visual Identity','Brand Guidelines'], color:'#28281e' },
+    { year:'2025',    name:'Departamento 112', cats:['Editorial Design'],                         desc:'Editorial design for Departamento 112. Architecture for content — structure that serves reading rather than decorates it.', scope:['Editorial Design','Typography','Layout System'], color:'#1e1e28' },
+    { year:'2025',    name:'Gen T',            cats:['Visual Identity'],                          desc:'Identity for Gen T. A generational mark — contemporary without being ephemeral, distinctive without being loud.', scope:['Visual Identity','Logo','Brand System'], color:'#281e1e' },
+    { year:'2025',    name:'La Joaqui',        cats:['Art Direction'],                            desc:'Title design for La Joaqui. Typography as image — a lettering that carries the weight and attitude of an artist.', scope:['Title Design','Typography','Art Direction'], color:'#1e281e' },
+    { year:'2025',    name:'Naked Lunch',      cats:['Art Direction','Communication Strategy'],   desc:'Shop window concept and design for Naked Lunch. The street as medium — a display that earns attention without demanding it.', scope:['Spatial Design','Concept Development','Art Direction','Communication Strategy'], color:'#24201e' },
+    { year:'2025',    name:'Hotel Estudio',    cats:['Visual Identity'],                          desc:'Identity for Hotel Estudio. A hospitality brand that reads as cultural institution — craft and warmth, without decoration.', scope:['Visual Identity','Logo','Brand System','Art Direction'], color:'#202420' },
+    { year:'2025',    name:'TAG',              cats:['Visual Identity'],                          desc:'Visual identity for TAG. Concise, scalable, unmistakable. A system built to work at every scale and context.', scope:['Logo','Visual Identity','Brand Guidelines'], color:'#1e1e1e' },
+  ];
+
+  /* BG crossfade */
+  const bgWrap = document.getElementById('bg-wrap');
+  const bgA = document.getElementById('bg-a');
+  const bgB = document.getElementById('bg-b');
+  let currentColor = '#111';
+  let pending = null;
+
+  function setBg(color) {
+    if (color === currentColor) return;
+    currentColor = color;
+    bgB.style.background = color;
+    bgB.style.opacity = '1';
+    clearTimeout(pending);
+    pending = setTimeout(() => { bgA.style.background = color; bgB.style.opacity = '0'; }, 500);
+  }
+
+  /* Build list */
+  function buildList() {
+    const list = document.getElementById('project-list');
+    projects.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'project-row';
+
+      const yearEl = document.createElement('span');
+      yearEl.className = 'p-year';
+      yearEl.textContent = p.year;
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'p-name';
+      nameEl.textContent = p.name;
+
+      const catEl = document.createElement('span');
+      catEl.className = 'p-cat';
+      p.cats.forEach((c, ci) => {
+        const link = document.createElement('span');
+        link.className = 'p-cat-link';
+        link.textContent = c;
+        link.addEventListener('click', e => {
+          e.stopPropagation();
+          openService(c);
+        });
+        catEl.appendChild(link);
+        if (ci < p.cats.length - 1) {
+          const sep = document.createElement('span');
+          sep.style.cssText = 'color:rgba(255,255,255,0.2);margin:0 4px';
+          sep.textContent = '/';
+          catEl.appendChild(sep);
+        }
+      });
+
+      row.appendChild(yearEl);
+      row.appendChild(nameEl);
+      row.appendChild(catEl);
+
+      row.addEventListener('mouseenter', () => setBg(p.color));
+      row.addEventListener('mouseleave', () => setBg('#111'));
+      row.addEventListener('click', () => openProject(i));
+      list.appendChild(row);
+    });
+  }
+
+  /* Project page */
+  function openProject(i) {
+    const p = projects[i];
+    const shades = ['#C8C8C8','#D0D0D0','#C0C0C0','#CACACA'];
+    document.getElementById('project-page-content').innerHTML = `
+      <div class="project-hero">
+        ${p.hero
+          ? `<img src="${p.hero}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />`
+          : `<span class="project-hero-label">Image 01 — ${p.name}</span>`
+        }
+      </div>
+
+      <div class="project-title-bar">
+        <h1 class="project-page-title">${p.name}</h1>
+        <div class="project-page-meta">
+          <div class="project-meta-item">
+            <span class="project-meta-label">Year</span>
+            <span class="project-meta-value">${p.year}</span>
+          </div>
+          <div class="project-meta-item">
+            <span class="project-meta-label">Services</span>
+            <span class="project-meta-value">${p.cats.join(' / ')}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-content">
+        <div class="project-description">
+          <span class="project-desc-label">Description</span>
+          <p class="project-desc-text">${p.desc}</p>
+        </div>
+        <div class="project-scope-col">
+          <span class="project-desc-label">Scope</span>
+          <ul class="project-scope-list">
+            ${p.scope.map(s => `<li>${s}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <div class="project-images-grid">
+        ${[1,2,3,4].map((n,idx) => `
+          <div class="project-img-cell" style="background:${shades[idx]}">
+            <span>Image 0${n+1}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    navigate('project');
+    window.scrollTo(0,0);
+  }
+
+  /* Routing */
+  const navEl   = document.getElementById('main-nav');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const pages   = {
+    home:    document.getElementById('page-home'),
+    studio:  document.getElementById('page-studio'),
+    contact: document.getElementById('page-contact'),
+    project: document.getElementById('page-project'),
+    service: document.getElementById('page-service'),
+  };
+
+  function navigate(page) {
+    Object.values(pages).forEach(el => { el.style.display = 'none'; el.classList.remove('active'); });
+    navLinks.forEach(l => l.classList.remove('active'));
+    // hide all floats on navigate
+    document.querySelectorAll('.floating-img').forEach(el => el.classList.remove('visible'));
+
+    const target = pages[page];
+    if (page === 'home') {
+      target.style.display = 'flex';
+      target.classList.add('active');
+      navEl.classList.add('transparent');
+      bgWrap.classList.add('active');
+      navLinks[0].classList.add('active');
+    } else {
+      target.style.display = 'block';
+      target.classList.add('active');
+      navEl.classList.remove('transparent');
+      bgWrap.classList.remove('active');
+      setBg('#111');
+      if (page === 'studio')  navLinks[1].classList.add('active');
+      if (page === 'contact') navLinks[2].classList.add('active');
+    }
+    window.scrollTo(0,0);
+  }
+
+  /* ── OPEN SERVICE PAGE ── */
+  // pre-assign stable positions per project — right half, fully within viewport
+  const floatPositions = [
+    { left: 55, top: 12 }, { left: 62, top: 45 }, { left: 52, top: 55 },
+    { left: 68, top: 22 }, { left: 57, top: 38 }, { left: 65, top: 52 },
+    { left: 54, top: 18 }, { left: 70, top: 35 }, { left: 60, top: 60 },
+    { left: 53, top: 42 }, { left: 67, top: 15 }, { left: 58, top: 50 },
+    { left: 63, top: 28 }, { left: 55, top: 62 }, { left: 69, top: 42 },
+    { left: 56, top: 32 },
+  ];
+
+  let activeFloat = null;
+
+  function openService(serviceName) {
+    // remove old floats
+    document.querySelectorAll('.floating-img').forEach(el => el.remove());
+    activeFloat = null;
+
+    // filter: projects whose cat contains any word from serviceName
+    const filtered = projects
+      .map((p, i) => ({ ...p, idx: i }))
+      .filter(p => p.cats.some(c => c.toLowerCase().includes(serviceName.toLowerCase()) || serviceName.toLowerCase().includes(c.toLowerCase())));
+
+    document.getElementById('service-page-name').textContent = serviceName;
+    const list = document.getElementById('service-project-list');
+    list.innerHTML = '';
+
+    filtered.forEach(p => {
+      const pos = floatPositions[p.idx];
+
+      // floating image
+      // clamp so image stays fully within viewport
+      const imgW = 380;
+      const imgH = imgW * (3/4);
+      const maxLeft = window.innerWidth  - imgW  - 16;
+      const maxTop  = window.innerHeight - imgH  - 16;
+      const minLeft = window.innerWidth  * 0.45; // keep on right half
+      const rawLeft = (pos.left / 100) * window.innerWidth;
+      const rawTop  = (pos.top  / 100) * window.innerHeight;
+      const clampedLeft = Math.min(maxLeft, Math.max(minLeft, rawLeft));
+      const clampedTop  = Math.min(maxTop,  Math.max(60, rawTop));
+
+      const float = document.createElement('div');
+      float.className = 'floating-img';
+      float.style.left = clampedLeft + 'px';
+      float.style.top  = clampedTop  + 'px';
+      float.style.background = `hsl(0,0%,${72 + (p.idx % 5) * 4}%)`;
+      float.innerHTML = `<span>${p.name}</span>`;
+      float.id = 'float-svc-' + p.idx;
+      document.body.appendChild(float);
+
+      // list row
+      const li = document.createElement('li');
+      li.className = 'service-project-row';
+      li.innerHTML = `<span class="sp-year">${p.year}</span><span class="sp-name">${p.name}</span>`;
+      li.addEventListener('mouseenter', () => {
+        if (activeFloat !== null) {
+          document.getElementById('float-svc-' + activeFloat)?.classList.remove('visible');
+        }
+        float.classList.add('visible');
+        activeFloat = p.idx;
+      });
+      li.addEventListener('mouseleave', () => {
+        float.classList.remove('visible');
+        activeFloat = null;
+      });
+      li.addEventListener('click', () => openProject(p.idx));
+      list.appendChild(li);
+    });
+
+    navigate('service');
+  }
+
+  /* Init */
+  buildList();
+  // home starts visible via inline style
+  pages.home.style.display = 'flex';
+</script>
+</body>
+</html>
